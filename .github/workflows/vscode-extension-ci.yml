@@ -10,9 +10,16 @@ on:
     paths:
       - 'advanced-coding-assistant-vscode/**'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    
+    permissions:
+      contents: read
+    
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -58,6 +65,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
     
     defaults:
       run:
