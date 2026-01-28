@@ -3,6 +3,7 @@
   "displayName": "Advanced Coding Assistant",
   "description": "An advanced coding assistant for VS Code",
   "version": "0.0.1",
+  "publisher": "bitsInnovate00",
   "engines": {
     "vscode": "^1.108.1"
   },

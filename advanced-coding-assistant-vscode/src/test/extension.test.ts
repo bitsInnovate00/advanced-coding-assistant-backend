@@ -9,14 +9,14 @@ suite('Extension Test Suite', () => {
 
   test('Extension should be present', () => {
     const extension = vscode.extensions.getExtension(
-      'undefined_publisher.advanced-coding-assistant'
+      'bitsInnovate00.advanced-coding-assistant'
     );
     assert.ok(extension);
   });
 
   test('Extension should activate', async () => {
     const extension = vscode.extensions.getExtension(
-      'undefined_publisher.advanced-coding-assistant'
+      'bitsInnovate00.advanced-coding-assistant'
     );
     if (extension) {
       await extension.activate();
