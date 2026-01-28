@@ -33,6 +33,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
 
     Logger.info('Advanced Coding Assistant extension activated successfully');
+    
+    // Send activation telemetry event
     TelemetryManager.sendEvent(TelemetryEventType.ExtensionActivated, {
       autoConnect: ConfigurationManager.isAutoConnectEnabled(),
     });
@@ -103,8 +105,6 @@ async function attemptConnection(): Promise<void> {
     // In a real implementation, this would be based on the actual connection result
     statusBarManager?.updateStatus(ConnectionStatus.Disconnected);
     Logger.info('Backend connection not yet implemented');
-
-    TelemetryManager.sendEvent(TelemetryEventType.ConnectionSuccess);
   } catch (error) {
     Logger.error('Failed to connect to backend', error);
     statusBarManager?.updateStatus(ConnectionStatus.Error);

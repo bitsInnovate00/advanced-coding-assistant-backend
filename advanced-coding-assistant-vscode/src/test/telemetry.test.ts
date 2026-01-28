@@ -2,6 +2,10 @@ import * as assert from 'assert';
 import { TelemetryManager, TelemetryEventType } from '../telemetry';
 
 suite('Telemetry Manager Test Suite', () => {
+  teardown(() => {
+    TelemetryManager.dispose();
+  });
+
   test('should initialize telemetry', () => {
     assert.doesNotThrow(() => {
       TelemetryManager.initialize();

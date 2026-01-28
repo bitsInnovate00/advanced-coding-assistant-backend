@@ -39,9 +39,6 @@ export class TelemetryManager {
 
     if (ConfigurationManager.isTelemetryEnabled()) {
       Logger.info('Telemetry is enabled');
-      this.sendEvent(TelemetryEventType.ExtensionActivated, {
-        timestamp: Date.now(),
-      });
     } else {
       Logger.info('Telemetry is disabled');
     }

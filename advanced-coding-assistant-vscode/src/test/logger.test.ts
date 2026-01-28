@@ -2,6 +2,10 @@ import * as assert from 'assert';
 import { Logger } from '../logger';
 
 suite('Logger Test Suite', () => {
+  teardown(() => {
+    Logger.dispose();
+  });
+
   test('should initialize logger', () => {
     Logger.initialize();
     const outputChannel = Logger.getOutputChannel();
