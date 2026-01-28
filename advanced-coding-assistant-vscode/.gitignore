@@ -1,0 +1,33 @@
+# Node modules
+node_modules/
+
+# Compiled output
+dist/
+out/
+
+# VS Code extension package
+*.vsix
+
+# Test results
+.vscode-test/
+coverage/
+
+# Build artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/.ropeproject
+.vscode/.history
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local

@@ -31,6 +31,13 @@ build/
 ### VS Code ###
 .vscode/
 
+# VS Code Extension
+advanced-coding-assistant-vscode/node_modules/
+advanced-coding-assistant-vscode/dist/
+advanced-coding-assistant-vscode/out/
+advanced-coding-assistant-vscode/*.vsix
+advanced-coding-assistant-vscode/.vscode-test/
+
 # Ignore local properties file
 application-local.properties
 

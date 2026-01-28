@@ -1,0 +1,101 @@
+name: VS Code Extension CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'advanced-coding-assistant-vscode/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'advanced-coding-assistant-vscode/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    permissions:
+      contents: read
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.x, 20.x]
+    
+    defaults:
+      run:
+        working-directory: advanced-coding-assistant-vscode
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: advanced-coding-assistant-vscode/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Check formatting
+      run: npm run format:check
+
+    - name: Run linter
+      run: npm run lint
+
+    - name: Compile TypeScript
+      run: npm run compile
+
+    - name: Run tests
+      uses: coactions/setup-xvfb@v1
+      with:
+        run: npm test
+        working-directory: advanced-coding-assistant-vscode
+
+    - name: Package extension
+      run: npm run package
+
+  package:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+    
+    defaults:
+      run:
+        working-directory: advanced-coding-assistant-vscode
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: advanced-coding-assistant-vscode/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install vsce
+      run: npm install -g @vscode/vsce
+
+    - name: Package extension
+      run: vsce package
+
+    - name: Upload VSIX artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: vscode-extension
+        path: advanced-coding-assistant-vscode/*.vsix
+        if-no-files-found: error
