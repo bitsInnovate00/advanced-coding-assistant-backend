@@ -4,6 +4,11 @@
   "description": "An advanced coding assistant for VS Code",
   "version": "0.0.1",
   "publisher": "bitsInnovate00",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bitsInnovate00/advanced-coding-assistant-backend.git",
+    "directory": "advanced-coding-assistant-vscode"
+  },
   "engines": {
     "vscode": "^1.108.1"
   },
