@@ -6,8 +6,18 @@ import { Logger } from './logger';
 import { StatusBarManager, ConnectionStatus } from './statusBar';
 import { ErrorHandler } from './errorHandler';
 import { TelemetryManager, TelemetryEventType } from './telemetry';
+import { ApiClient } from './api';
 
 let statusBarManager: StatusBarManager | undefined;
+let apiClient: ApiClient | undefined;
+
+/**
+ * Gets the API client instance
+ * @returns The API client instance or undefined if not initialized
+ */
+export function getApiClient(): ApiClient | undefined {
+  return apiClient;
+}
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -23,6 +33,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // Create status bar manager
     statusBarManager = new StatusBarManager();
     context.subscriptions.push(statusBarManager);
+
+    // Initialize API client
+    const apiEndpoint = ConfigurationManager.getApiEndpoint();
+    apiClient = new ApiClient({
+      baseUrl: apiEndpoint,
+      timeout: 30000,
+      retryAttempts: 3,
+      retryDelay: 1000,
+    });
 
     // Register commands
     registerCommands(context);
@@ -97,14 +116,24 @@ async function attemptConnection(): Promise<void> {
       endpoint: apiEndpoint,
     });
 
-    // Simulate connection attempt
-    // In a real implementation, this would make an actual HTTP request
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Perform health check using API client
+    if (!apiClient) {
+      throw new Error('API client not initialized');
+    }
 
-    // For now, we'll just set it to disconnected since there's no real backend to connect to
-    // In a real implementation, this would be based on the actual connection result
-    statusBarManager?.updateStatus(ConnectionStatus.Disconnected);
-    Logger.info('Backend connection not yet implemented');
+    const healthResult = await apiClient.healthCheck();
+
+    if (healthResult.status === 'ok') {
+      statusBarManager?.updateStatus(ConnectionStatus.Connected);
+      Logger.info(`Successfully connected to backend at ${apiEndpoint}`);
+      
+      TelemetryManager.sendEvent(TelemetryEventType.ConnectionSuccess, {
+        endpoint: apiEndpoint,
+      });
+    } else {
+      statusBarManager?.updateStatus(ConnectionStatus.Disconnected);
+      Logger.warn(`Backend at ${apiEndpoint} is not responding properly`);
+    }
   } catch (error) {
     Logger.error('Failed to connect to backend', error);
     statusBarManager?.updateStatus(ConnectionStatus.Error);
