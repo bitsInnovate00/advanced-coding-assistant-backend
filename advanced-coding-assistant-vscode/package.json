@@ -3,21 +3,59 @@
   "displayName": "Advanced Coding Assistant",
   "description": "An advanced coding assistant for VS Code",
   "version": "0.0.1",
+  "publisher": "bitsInnovate00",
   "engines": {
     "vscode": "^1.108.1"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "advanced-coding-assistant.helloWorld",
-        "title": "Hello World"
+        "title": "Advanced Coding Assistant: Hello World"
+      },
+      {
+        "command": "advanced-coding-assistant.showStatus",
+        "title": "Advanced Coding Assistant: Show Status"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Advanced Coding Assistant",
+      "properties": {
+        "advancedCodingAssistant.apiEndpoint": {
+          "type": "string",
+          "default": "http://localhost:8080",
+          "description": "The API endpoint URL for the Advanced Coding Assistant backend"
+        },
+        "advancedCodingAssistant.enableTelemetry": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable anonymous telemetry to help improve the extension"
+        },
+        "advancedCodingAssistant.logLevel": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "default": "info",
+          "description": "The logging level for the output channel"
+        },
+        "advancedCodingAssistant.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically connect to the backend on extension activation"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

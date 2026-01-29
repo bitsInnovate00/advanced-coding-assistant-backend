@@ -8,9 +8,12 @@ This VS Code extension provides advanced coding assistance features to enhance d
 
 ## Features
 
-- AI-powered coding assistance
-- Context-aware code suggestions
-- Seamless integration with VS Code
+- **Automatic Activation**: Extension activates on VS Code startup
+- **Status Bar Integration**: Connection status indicator in the status bar
+- **Output Channel**: Dedicated output channel for logging and diagnostics
+- **Configuration Management**: Customizable settings accessible via VS Code settings
+- **Error Handling**: User-friendly error messages with actionable options
+- **Telemetry**: Optional telemetry framework (opt-in) for improving the extension
 
 ## Requirements
 
@@ -113,7 +116,17 @@ vsce package
 advanced-coding-assistant-vscode/
 ├── src/                     # Source code
 │   ├── extension.ts         # Extension entry point
+│   ├── config.ts            # Configuration manager
+│   ├── logger.ts            # Logger with output channel
+│   ├── statusBar.ts         # Status bar manager
+│   ├── errorHandler.ts      # Error handling utilities
+│   ├── telemetry.ts         # Telemetry framework
 │   └── test/                # Tests
+│       ├── extension.test.ts    # Extension tests
+│       ├── config.test.ts       # Configuration tests
+│       ├── logger.test.ts       # Logger tests
+│       ├── statusBar.test.ts    # Status bar tests
+│       └── telemetry.test.ts    # Telemetry tests
 ├── dist/                    # Compiled output (webpack)
 ├── out/                     # Compiled output (tests)
 ├── .vscode/                 # VS Code configuration
@@ -128,7 +141,10 @@ advanced-coding-assistant-vscode/
 
 This extension contributes the following settings:
 
-* Currently no settings are exposed. Settings will be added as features are developed.
+* `advancedCodingAssistant.apiEndpoint`: The API endpoint URL for the Advanced Coding Assistant backend (default: `http://localhost:8080`)
+* `advancedCodingAssistant.enableTelemetry`: Enable anonymous telemetry to help improve the extension (default: `false`)
+* `advancedCodingAssistant.logLevel`: The logging level for the output channel - options: `debug`, `info`, `warn`, `error` (default: `info`)
+* `advancedCodingAssistant.autoConnect`: Automatically connect to the backend on extension activation (default: `true`)
 
 ## Known Issues
 
@@ -138,7 +154,17 @@ No known issues at this time. Please report any issues on the [GitHub repository
 
 ### 0.0.1
 
-Initial scaffolding and project setup.
+**Extension Activation & Basic Architecture**
+
+- Extension activates on VS Code startup
+- Configuration schema with customizable settings
+- Status bar shows connection status
+- Output channel for logs and diagnostics
+- User-friendly error handling with actionable messages
+- Telemetry framework (opt-in) initialized
+- Commands:
+  - `Advanced Coding Assistant: Hello World` - Test command
+  - `Advanced Coding Assistant: Show Status` - Display connection status and settings
 
 ## Contributing
 
