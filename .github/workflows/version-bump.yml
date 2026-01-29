@@ -83,13 +83,17 @@ jobs:
         
         # Create temp file with new content
         {
+          # Print everything up to and including the Unreleased header
           sed -n '1,/## \[Unreleased\]/p' CHANGELOG.md
+          # Add blank line
           echo ""
+          # Add new version section
           echo "## [${NEW_VERSION}] - ${CURRENT_DATE}"
           echo ""
           echo -e "${CHANGELOG_CONTENT}"
           echo ""
-          sed -n '/## \[Unreleased\]/,$p' CHANGELOG.md | tail -n +2
+          # Skip to the first existing version section (skip Unreleased content)
+          sed -n '/## \[Unreleased\]/,/## \[[0-9]/{ /## \[[0-9]/,$ p }' CHANGELOG.md | grep -v "^$" || sed -n '/## \[Unreleased\]/,${/^$/!{/## \[Unreleased\]/!p}}' CHANGELOG.md
         } > CHANGELOG.tmp
         
         mv CHANGELOG.tmp CHANGELOG.md

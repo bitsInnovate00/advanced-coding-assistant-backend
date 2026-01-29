@@ -168,10 +168,14 @@ jobs:
       run: npm install -g @vscode/vsce
 
     - name: Publish to VS Code Marketplace
-      if: ${{ secrets.VSCE_TOKEN != '' }}
       run: |
         VSIX_FILE=$(ls *.vsix)
-        vsce publish --packagePath "$VSIX_FILE"
+        if [ -n "$VSCE_PAT" ]; then
+          echo "Publishing to VS Code Marketplace..."
+          vsce publish --packagePath "$VSIX_FILE"
+        else
+          echo "VSCE_PAT not configured - skipping marketplace publication"
+        fi
       env:
         VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
 
@@ -179,7 +183,7 @@ jobs:
       run: |
         echo "## Marketplace Publication" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        if [ -n "${{ secrets.VSCE_TOKEN }}" ]; then
+        if [ -n "$VSCE_PAT" ]; then
           echo "✅ Extension published to VS Code Marketplace" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ needs.build-and-package.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Package:** ${{ needs.build-and-package.outputs.vsix-name }}" >> $GITHUB_STEP_SUMMARY
@@ -187,3 +191,5 @@ jobs:
           echo "⚠️ VSCE_TOKEN not configured - skipping marketplace publication" >> $GITHUB_STEP_SUMMARY
           echo "To enable automated publishing, add VSCE_TOKEN to repository secrets" >> $GITHUB_STEP_SUMMARY
         fi
+      env:
+        VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
