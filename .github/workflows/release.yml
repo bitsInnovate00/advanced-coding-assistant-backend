@@ -94,7 +94,7 @@ jobs:
         ref: ${{ inputs.tag || github.ref }}
 
     - name: Download VSIX artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v4.1.3
       with:
         name: vscode-extension-release
         path: ./vsix
@@ -154,7 +154,7 @@ jobs:
         ref: ${{ inputs.tag || github.ref }}
 
     - name: Download VSIX artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v4.1.3
       with:
         name: vscode-extension-release
         path: advanced-coding-assistant-vscode
