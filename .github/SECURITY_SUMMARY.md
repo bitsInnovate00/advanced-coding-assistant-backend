@@ -23,6 +23,14 @@ This security summary documents the security analysis performed on the CI/CD pip
 - **Action**: Automated scanning on every PR and push
 - **Results Storage**: Audit results uploaded as artifacts for review
 
+### GitHub Actions Dependencies
+- **Status**: ✅ SECURE
+- **Vulnerability Fixed**: Updated `actions/download-artifact` from v4.0.0 to v4.1.3
+- **CVE**: Arbitrary File Write via artifact extraction
+- **Affected Versions**: >= 4.0.0, < 4.1.3
+- **Patched Version**: 4.1.3
+- **Fix Date**: 2026-01-29
+
 ## Security Features Implemented
 
 ### 1. Automated Security Scanning
