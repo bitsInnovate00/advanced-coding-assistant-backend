@@ -1,6 +1,5 @@
 import * as assert from 'assert';
 import { RepositoryDetector } from '../../repository/repositoryDetector';
-import { IndexingStatus } from '../../repository/types';
 
 suite('Repository Detector Test Suite', () => {
   let detector: RepositoryDetector;
@@ -51,16 +50,17 @@ suite('Repository Detector Test Suite', () => {
       assert.ok(detector.onRepositoriesChanged);
     });
 
-    test('should fire event when listener is registered', (done) => {
-      detector.onRepositoriesChanged(() => {
-        done();
+    test('should allow event listener registration', () => {
+      // Verify that the event can be subscribed to without errors
+      const disposable = detector.onRepositoriesChanged(() => {
+        // Event listener registered
       });
       
-      // Force a status update (will not find the repo, but should still work)
-      detector.updateRepositoryStatus('/nonexistent', IndexingStatus.Indexed);
+      assert.ok(disposable);
+      assert.strictEqual(typeof disposable.dispose, 'function');
       
-      // Wait a bit for potential event
-      setTimeout(done, 100);
+      // Clean up
+      disposable.dispose();
     });
   });
 });

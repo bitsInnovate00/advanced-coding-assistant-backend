@@ -106,27 +106,7 @@
         {
           "command": "advanced-coding-assistant.deleteRepositoryIndex",
           "when": "view == advancedCodingAssistant.repositories && viewItem == repository-indexed",
-          "group": "inline"
-        },
-        {
-          "command": "advanced-coding-assistant.indexRepository",
-          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-not-indexed",
-          "group": "1_actions"
-        },
-        {
-          "command": "advanced-coding-assistant.indexRepository",
-          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-error",
-          "group": "1_actions"
-        },
-        {
-          "command": "advanced-coding-assistant.reindexRepository",
-          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-indexed",
-          "group": "1_actions"
-        },
-        {
-          "command": "advanced-coding-assistant.deleteRepositoryIndex",
-          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-indexed",
-          "group": "2_danger"
+          "group": "inline@2"
         }
       ]
     },

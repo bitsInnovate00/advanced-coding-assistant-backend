@@ -16,10 +16,10 @@ export class RepositoryTreeItem extends vscode.TreeItem {
     this.iconPath = this.getIconPath();
     this.contextValue = this.getContextValue();
     
-    // Make item clickable to reveal in explorer
+    // Make item clickable to reveal in OS file explorer
     this.command = {
-      command: 'revealInExplorer',
-      title: 'Reveal in Explorer',
+      command: 'revealFileInOS',
+      title: 'Reveal in File Explorer',
       arguments: [vscode.Uri.file(repository.path)],
     };
   }

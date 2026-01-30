@@ -52,11 +52,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       retryDelay: 1000,
     });
 
-    // Register commands
-    registerCommands(context);
-
-    // Initialize repository detection
+    // Initialize repository detection first (before registering commands that use it)
     await initializeRepositoryDetection(context);
+
+    // Register commands (including repository commands)
+    registerCommands(context);
 
     // Attempt auto-connect if enabled
     if (ConfigurationManager.isAutoConnectEnabled()) {

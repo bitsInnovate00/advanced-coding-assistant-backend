@@ -160,7 +160,8 @@ export class RepositoryDetector {
     
     if (repo) {
       repo.status = status;
-      repo.errorMessage = errorMessage;
+      // Only set errorMessage for Error status, clear it otherwise
+      repo.errorMessage = status === IndexingStatus.Error ? errorMessage : undefined;
       
       if (status === IndexingStatus.Indexed) {
         repo.lastIndexed = new Date();
