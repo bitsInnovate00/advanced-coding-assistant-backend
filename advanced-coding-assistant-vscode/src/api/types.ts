@@ -143,7 +143,7 @@ export interface ApiClientConfig {
  */
 export interface RequestHeaders {
   'Content-Type'?: string;
-  'Authorization'?: string;
+  Authorization?: string;
   'Persist-Conversation'?: string;
   'Conversation-Id'?: string;
   [key: string]: string | undefined;

@@ -52,9 +52,7 @@ suite('API Client Test Suite', () => {
     test('should create valid chat completion request structure', () => {
       const request: ChatCompletionRequest = {
         model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'user', content: 'Hello' },
-        ],
+        messages: [{ role: 'user', content: 'Hello' }],
         temperature: 0.7,
         maxTokens: 100,
       };
@@ -196,7 +194,10 @@ suite('API Client Test Suite', () => {
         await timeoutClient.getConversations();
       } catch (error) {
         assert.ok(error);
-        assert.ok((error as Error).message.includes('timeout') || (error as Error).message.includes('ECONNREFUSED'));
+        assert.ok(
+          (error as Error).message.includes('timeout') ||
+            (error as Error).message.includes('ECONNREFUSED')
+        );
       }
     });
   });

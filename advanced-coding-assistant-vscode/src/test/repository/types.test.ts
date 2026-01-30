@@ -1,9 +1,5 @@
 import * as assert from 'assert';
-import {
-  Repository,
-  IndexingStatus,
-  RepositoryContextValue,
-} from '../../repository/types';
+import { Repository, IndexingStatus, RepositoryContextValue } from '../../repository/types';
 
 suite('Repository Types Test Suite', () => {
   suite('IndexingStatus', () => {

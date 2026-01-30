@@ -13,6 +13,7 @@ import {
   RepositoryManager,
   RepositoryTreeItem,
 } from './repository';
+import { registerChatParticipant } from './chat';
 
 let statusBarManager: StatusBarManager | undefined;
 let apiClient: ApiClient | undefined;
@@ -58,13 +59,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // Register commands (including repository commands)
     registerCommands(context);
 
+    // Register chat participant for GitHub Copilot Chat integration
+    registerChatParticipant(context, () => apiClient);
+
     // Attempt auto-connect if enabled
     if (ConfigurationManager.isAutoConnectEnabled()) {
       await attemptConnection();
     }
 
     Logger.info('Advanced Coding Assistant extension activated successfully');
-    
+
     // Send activation telemetry event
     TelemetryManager.sendEvent(TelemetryEventType.ExtensionActivated, {
       autoConnect: ConfigurationManager.isAutoConnectEnabled(),
@@ -201,13 +205,13 @@ async function initializeRepositoryDetection(context: vscode.ExtensionContext): 
 
   // Create repository detector
   repositoryDetector = new RepositoryDetector();
-  
+
   // Create repository manager with API client getter
   repositoryManager = new RepositoryManager(repositoryDetector, () => apiClient);
-  
+
   // Create tree view provider
   repositoryTreeProvider = new RepositoryTreeProvider(repositoryDetector);
-  
+
   // Register tree view
   const treeView = vscode.window.createTreeView('advancedCodingAssistant.repositories', {
     treeDataProvider: repositoryTreeProvider,
@@ -230,7 +234,7 @@ async function initializeRepositoryDetection(context: vscode.ExtensionContext): 
 
   // Initial repository detection
   await repositoryDetector.detectRepositories();
-  
+
   const repos = repositoryDetector.getRepositories();
   Logger.info(`Detected ${repos.length} repository(ies) in workspace`);
 }
@@ -258,7 +262,7 @@ async function attemptConnection(): Promise<void> {
     if (healthResult.status === 'ok') {
       statusBarManager?.updateStatus(ConnectionStatus.Connected);
       Logger.info(`Successfully connected to backend at ${apiEndpoint}`);
-      
+
       TelemetryManager.sendEvent(TelemetryEventType.ConnectionSuccess, {
         endpoint: apiEndpoint,
       });

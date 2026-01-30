@@ -55,10 +55,10 @@ suite('Repository Detector Test Suite', () => {
       const disposable = detector.onRepositoriesChanged(() => {
         // Event listener registered
       });
-      
+
       assert.ok(disposable);
       assert.strictEqual(typeof disposable.dispose, 'function');
-      
+
       // Clean up
       disposable.dispose();
     });

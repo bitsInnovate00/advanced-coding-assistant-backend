@@ -10,7 +10,7 @@ import { Logger } from '../logger';
 export class RepositoryDetector {
   private repositories: Map<string, Repository> = new Map();
   private readonly onRepositoriesChangedEmitter = new vscode.EventEmitter<Repository[]>();
-  
+
   /**
    * Event fired when repositories change (detected, removed, or status updated)
    */
@@ -22,7 +22,7 @@ export class RepositoryDetector {
    */
   public async detectRepositories(): Promise<Repository[]> {
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    
+
     if (!workspaceFolders || workspaceFolders.length === 0) {
       Logger.info('No workspace folders found');
       this.repositories.clear();
@@ -31,9 +31,9 @@ export class RepositoryDetector {
     }
 
     Logger.info(`Detecting repositories in ${workspaceFolders.length} workspace folder(s)`);
-    
+
     const detectedPaths = new Set<string>();
-    
+
     for (const folder of workspaceFolders) {
       await this.detectRepositoriesInFolder(folder.uri.fsPath, detectedPaths);
     }
@@ -61,7 +61,7 @@ export class RepositoryDetector {
   ): Promise<void> {
     try {
       const gitPath = path.join(folderPath, '.git');
-      
+
       // Check if this folder is a git repository
       if (await this.pathExists(gitPath)) {
         this.addOrUpdateRepository(folderPath);
@@ -73,12 +73,12 @@ export class RepositoryDetector {
 
       // Search subdirectories (one level deep for performance)
       const entries = await fs.promises.readdir(folderPath, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
           const subPath = path.join(folderPath, entry.name);
           const subGitPath = path.join(subPath, '.git');
-          
+
           if (await this.pathExists(subGitPath)) {
             this.addOrUpdateRepository(subPath);
             detectedPaths.add(subPath);
@@ -111,7 +111,7 @@ export class RepositoryDetector {
    */
   private addOrUpdateRepository(repoPath: string): void {
     const existing = this.repositories.get(repoPath);
-    
+
     if (existing) {
       // Repository already tracked, preserve its status
       return;
@@ -131,9 +131,7 @@ export class RepositoryDetector {
    * @returns Array of repositories
    */
   public getRepositories(): Repository[] {
-    return Array.from(this.repositories.values()).sort((a, b) => 
-      a.name.localeCompare(b.name)
-    );
+    return Array.from(this.repositories.values()).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /**
@@ -157,16 +155,16 @@ export class RepositoryDetector {
     errorMessage?: string
   ): void {
     const repo = this.repositories.get(repoPath);
-    
+
     if (repo) {
       repo.status = status;
       // Only set errorMessage for Error status, clear it otherwise
       repo.errorMessage = status === IndexingStatus.Error ? errorMessage : undefined;
-      
+
       if (status === IndexingStatus.Indexed) {
         repo.lastIndexed = new Date();
       }
-      
+
       this.fireRepositoriesChanged();
       Logger.info(`Repository status updated: ${repo.name} -> ${status}`);
     }

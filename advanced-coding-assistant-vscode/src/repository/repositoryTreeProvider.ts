@@ -6,16 +6,14 @@ import { RepositoryDetector } from './repositoryDetector';
  * Tree item representing a repository in the sidebar
  */
 export class RepositoryTreeItem extends vscode.TreeItem {
-  constructor(
-    public readonly repository: Repository
-  ) {
+  constructor(public readonly repository: Repository) {
     super(repository.name, vscode.TreeItemCollapsibleState.None);
-    
+
     this.description = this.getDescription();
     this.tooltip = this.getTooltip();
     this.iconPath = this.getIconPath();
     this.contextValue = this.getContextValue();
-    
+
     // Make item clickable to reveal in OS file explorer
     this.command = {
       command: 'revealFileInOS',
@@ -46,15 +44,15 @@ export class RepositoryTreeItem extends vscode.TreeItem {
    */
   private getTooltip(): string {
     let tooltip = `${this.repository.name}\n${this.repository.path}\n\nStatus: ${this.repository.status}`;
-    
+
     if (this.repository.lastIndexed) {
       tooltip += `\nLast indexed: ${this.repository.lastIndexed.toLocaleString()}`;
     }
-    
+
     if (this.repository.errorMessage) {
       tooltip += `\nError: ${this.repository.errorMessage}`;
     }
-    
+
     return tooltip;
   }
 
@@ -97,8 +95,10 @@ export class RepositoryTreeItem extends vscode.TreeItem {
  * Tree data provider for the repository sidebar view
  */
 export class RepositoryTreeProvider implements vscode.TreeDataProvider<RepositoryTreeItem> {
-  private readonly onDidChangeTreeDataEmitter = new vscode.EventEmitter<RepositoryTreeItem | undefined | null | void>();
-  
+  private readonly onDidChangeTreeDataEmitter = new vscode.EventEmitter<
+    RepositoryTreeItem | undefined | null | void
+  >();
+
   /**
    * Event fired when tree data changes
    */

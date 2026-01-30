@@ -72,6 +72,20 @@
         "command": "advanced-coding-assistant.indexAllRepositories",
         "title": "Index All Repositories",
         "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "advanced-coding-assistant.applyCode",
+        "title": "Apply Code",
+        "icon": "$(code)"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "advanced-coding-assistant.aca",
+        "fullName": "Advanced Coding Assistant",
+        "name": "aca",
+        "description": "Ask questions about your code, get explanations, and receive coding assistance",
+        "isSticky": true
       }
     ],
     "menus": {
