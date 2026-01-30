@@ -72,6 +72,20 @@
         "command": "advanced-coding-assistant.indexAllRepositories",
         "title": "Index All Repositories",
         "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "advanced-coding-assistant.applyCode",
+        "title": "Apply Code",
+        "icon": "$(code)"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "advanced-coding-assistant.aca",
+        "fullName": "Advanced Coding Assistant",
+        "name": "aca",
+        "description": "Ask questions about your code, get explanations, and receive coding assistance",
+        "isSticky": true
       }
     ],
     "menus": {
@@ -138,6 +152,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically connect to the backend on extension activation"
+        },
+        "advancedCodingAssistant.chatModel": {
+          "type": "string",
+          "default": "gpt-4",
+          "description": "The model to use for chat completions (e.g., gpt-4, gpt-3.5-turbo)"
         }
       }
     }

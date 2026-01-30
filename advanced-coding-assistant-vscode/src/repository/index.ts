@@ -1,6 +1,6 @@
 /**
  * Repository Detection & Workspace Integration Module
- * 
+ *
  * This module provides services for detecting Git repositories in the
  * VS Code workspace and managing their indexing status.
  */

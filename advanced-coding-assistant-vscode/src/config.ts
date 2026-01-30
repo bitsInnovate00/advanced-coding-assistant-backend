@@ -35,6 +35,13 @@ export class ConfigurationManager {
   }
 
   /**
+   * Gets the chat model to use for completions
+   */
+  public static getChatModel(): string {
+    return this.getConfig<string>('chatModel', 'gpt-4');
+  }
+
+  /**
    * Gets a configuration value
    */
   private static getConfig<T>(key: string, defaultValue: T): T {

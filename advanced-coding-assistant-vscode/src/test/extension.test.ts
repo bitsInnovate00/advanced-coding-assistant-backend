@@ -8,16 +8,12 @@ suite('Extension Test Suite', () => {
   vscode.window.showInformationMessage('Start all tests.');
 
   test('Extension should be present', () => {
-    const extension = vscode.extensions.getExtension(
-      'bitsInnovate00.advanced-coding-assistant'
-    );
+    const extension = vscode.extensions.getExtension('bitsInnovate00.advanced-coding-assistant');
     assert.ok(extension);
   });
 
   test('Extension should activate', async () => {
-    const extension = vscode.extensions.getExtension(
-      'bitsInnovate00.advanced-coding-assistant'
-    );
+    const extension = vscode.extensions.getExtension('bitsInnovate00.advanced-coding-assistant');
     if (extension) {
       await extension.activate();
       assert.ok(extension.isActive);
@@ -77,6 +73,14 @@ suite('Extension Test Suite', () => {
     assert.ok(
       commands.includes('advanced-coding-assistant.indexAllRepositories'),
       'Index All Repositories command not found'
+    );
+  });
+
+  test('Apply Code command should be registered', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(
+      commands.includes('advanced-coding-assistant.applyCode'),
+      'Apply Code command not found'
     );
   });
 });

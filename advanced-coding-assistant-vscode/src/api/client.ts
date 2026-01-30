@@ -116,7 +116,7 @@ export class ApiClient {
         timeout: this.timeout,
       };
 
-      const req = httpModule.request(url, options, (res) => {
+      const req = httpModule.request(url, options, res => {
         let conversationId: string | undefined;
 
         // Extract conversation ID from headers
@@ -153,12 +153,12 @@ export class ApiClient {
           resolve({ conversationId });
         });
 
-        res.on('error', (error) => {
+        res.on('error', error => {
           reject(this.createError('Stream error', error.message));
         });
       });
 
-      req.on('error', (error) => {
+      req.on('error', error => {
         reject(this.createError('Request failed', error.message));
       });
 
@@ -193,12 +193,9 @@ export class ApiClient {
    * @returns Promise with the upload response
    */
   public async uploadLocalRepository(localPath: string): Promise<RepositoryResponse> {
-    const result = await this.request<string>(
-      'POST',
-      '/v1/repositories/local',
-      localPath,
-      { 'Content-Type': 'text/plain' }
-    );
+    const result = await this.request<string>('POST', '/v1/repositories/local', localPath, {
+      'Content-Type': 'text/plain',
+    });
     return { message: result.data, path: localPath };
   }
 
@@ -223,12 +220,9 @@ export class ApiClient {
    * @returns Promise with the refresh response
    */
   public async refreshLocalRepository(localPath: string): Promise<RepositoryResponse> {
-    const result = await this.request<string>(
-      'PUT',
-      '/v1/repositories/local/refresh',
-      localPath,
-      { 'Content-Type': 'text/plain' }
-    );
+    const result = await this.request<string>('PUT', '/v1/repositories/local/refresh', localPath, {
+      'Content-Type': 'text/plain',
+    });
     return { message: result.data, path: localPath };
   }
 
@@ -251,7 +245,7 @@ export class ApiClient {
    */
   public async getConversations(): Promise<Conversation[]> {
     const result = await this.request<Array<Record<string, string>>>('GET', '/v1/conversations');
-    return result.data.map((conv) => this.mapConversation(conv));
+    return result.data.map(conv => this.mapConversation(conv));
   }
 
   /**
@@ -264,7 +258,7 @@ export class ApiClient {
       'GET',
       `/v1/conversations/${conversationId}/messages`
     );
-    return result.data.map((msg) => ({
+    return result.data.map(msg => ({
       role: msg.role || '',
       content: msg.content || '',
       timestamp: msg.timestamp,
@@ -379,11 +373,11 @@ export class ApiClient {
         timeout: this.timeout,
       };
 
-      const req = httpModule.request(url, options, (res) => {
+      const req = httpModule.request(url, options, res => {
         let data = '';
 
         res.setEncoding('utf8');
-        res.on('data', (chunk) => {
+        res.on('data', chunk => {
           data += chunk;
         });
 
@@ -422,7 +416,7 @@ export class ApiClient {
         });
       });
 
-      req.on('error', (error) => {
+      req.on('error', error => {
         reject(this.createError('Request failed', error.message));
       });
 
@@ -508,6 +502,6 @@ export class ApiClient {
    * @returns Promise that resolves after the duration
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
