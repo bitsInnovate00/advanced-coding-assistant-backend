@@ -39,4 +39,44 @@ suite('Extension Test Suite', () => {
       'Show Status command not found'
     );
   });
+
+  test('Refresh Repositories command should be registered', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(
+      commands.includes('advanced-coding-assistant.refreshRepositories'),
+      'Refresh Repositories command not found'
+    );
+  });
+
+  test('Index Repository command should be registered', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(
+      commands.includes('advanced-coding-assistant.indexRepository'),
+      'Index Repository command not found'
+    );
+  });
+
+  test('Re-index Repository command should be registered', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(
+      commands.includes('advanced-coding-assistant.reindexRepository'),
+      'Re-index Repository command not found'
+    );
+  });
+
+  test('Delete Repository Index command should be registered', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(
+      commands.includes('advanced-coding-assistant.deleteRepositoryIndex'),
+      'Delete Repository Index command not found'
+    );
+  });
+
+  test('Index All Repositories command should be registered', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(
+      commands.includes('advanced-coding-assistant.indexAllRepositories'),
+      'Index All Repositories command not found'
+    );
+  });
 });
