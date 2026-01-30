@@ -20,6 +20,25 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "advanced-coding-assistant",
+          "title": "Advanced Coding Assistant",
+          "icon": "$(hubot)"
+        }
+      ]
+    },
+    "views": {
+      "advanced-coding-assistant": [
+        {
+          "id": "advancedCodingAssistant.repositories",
+          "name": "Repositories",
+          "icon": "$(repo)",
+          "contextualTitle": "Repositories"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "advanced-coding-assistant.helloWorld",
@@ -28,8 +47,89 @@
       {
         "command": "advanced-coding-assistant.showStatus",
         "title": "Advanced Coding Assistant: Show Status"
+      },
+      {
+        "command": "advanced-coding-assistant.refreshRepositories",
+        "title": "Refresh Repositories",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "advanced-coding-assistant.indexRepository",
+        "title": "Index Repository",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "advanced-coding-assistant.reindexRepository",
+        "title": "Re-index Repository",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "advanced-coding-assistant.deleteRepositoryIndex",
+        "title": "Remove from Index",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "advanced-coding-assistant.indexAllRepositories",
+        "title": "Index All Repositories",
+        "icon": "$(cloud-upload)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "advanced-coding-assistant.refreshRepositories",
+          "when": "view == advancedCodingAssistant.repositories",
+          "group": "navigation"
+        },
+        {
+          "command": "advanced-coding-assistant.indexAllRepositories",
+          "when": "view == advancedCodingAssistant.repositories",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "advanced-coding-assistant.indexRepository",
+          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-not-indexed",
+          "group": "inline"
+        },
+        {
+          "command": "advanced-coding-assistant.indexRepository",
+          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-error",
+          "group": "inline"
+        },
+        {
+          "command": "advanced-coding-assistant.reindexRepository",
+          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-indexed",
+          "group": "inline"
+        },
+        {
+          "command": "advanced-coding-assistant.deleteRepositoryIndex",
+          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-indexed",
+          "group": "inline"
+        },
+        {
+          "command": "advanced-coding-assistant.indexRepository",
+          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-not-indexed",
+          "group": "1_actions"
+        },
+        {
+          "command": "advanced-coding-assistant.indexRepository",
+          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-error",
+          "group": "1_actions"
+        },
+        {
+          "command": "advanced-coding-assistant.reindexRepository",
+          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-indexed",
+          "group": "1_actions"
+        },
+        {
+          "command": "advanced-coding-assistant.deleteRepositoryIndex",
+          "when": "view == advancedCodingAssistant.repositories && viewItem == repository-indexed",
+          "group": "2_danger"
+        }
+      ]
+    },
     "configuration": {
       "title": "Advanced Coding Assistant",
       "properties": {

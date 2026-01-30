@@ -7,9 +7,18 @@ import { StatusBarManager, ConnectionStatus } from './statusBar';
 import { ErrorHandler } from './errorHandler';
 import { TelemetryManager, TelemetryEventType } from './telemetry';
 import { ApiClient } from './api';
+import {
+  RepositoryDetector,
+  RepositoryTreeProvider,
+  RepositoryManager,
+  RepositoryTreeItem,
+} from './repository';
 
 let statusBarManager: StatusBarManager | undefined;
 let apiClient: ApiClient | undefined;
+let repositoryDetector: RepositoryDetector | undefined;
+let repositoryManager: RepositoryManager | undefined;
+let repositoryTreeProvider: RepositoryTreeProvider | undefined;
 
 /**
  * Gets the API client instance
@@ -45,6 +54,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     // Register commands
     registerCommands(context);
+
+    // Initialize repository detection
+    await initializeRepositoryDetection(context);
 
     // Attempt auto-connect if enabled
     if (ConfigurationManager.isAutoConnectEnabled()) {
@@ -101,6 +113,126 @@ function registerCommands(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(helloWorldCommand, showStatusCommand);
+
+  // Repository commands
+  const refreshRepositoriesCommand = vscode.commands.registerCommand(
+    'advanced-coding-assistant.refreshRepositories',
+    ErrorHandler.wrapAsync(async () => {
+      await repositoryManager?.refreshRepositories();
+      TelemetryManager.sendEvent(TelemetryEventType.CommandExecuted, {
+        command: 'refreshRepositories',
+      });
+    }, 'Failed to refresh repositories')
+  );
+
+  const indexRepositoryCommand = vscode.commands.registerCommand(
+    'advanced-coding-assistant.indexRepository',
+    async (item: RepositoryTreeItem) => {
+      try {
+        if (item?.repository) {
+          await repositoryManager?.indexRepository(item.repository.path);
+          TelemetryManager.sendEvent(TelemetryEventType.CommandExecuted, {
+            command: 'indexRepository',
+          });
+        }
+      } catch (error) {
+        await ErrorHandler.handleError(error, 'Failed to index repository');
+      }
+    }
+  );
+
+  const reindexRepositoryCommand = vscode.commands.registerCommand(
+    'advanced-coding-assistant.reindexRepository',
+    async (item: RepositoryTreeItem) => {
+      try {
+        if (item?.repository) {
+          await repositoryManager?.reindexRepository(item.repository.path);
+          TelemetryManager.sendEvent(TelemetryEventType.CommandExecuted, {
+            command: 'reindexRepository',
+          });
+        }
+      } catch (error) {
+        await ErrorHandler.handleError(error, 'Failed to re-index repository');
+      }
+    }
+  );
+
+  const deleteRepositoryIndexCommand = vscode.commands.registerCommand(
+    'advanced-coding-assistant.deleteRepositoryIndex',
+    async (item: RepositoryTreeItem) => {
+      try {
+        if (item?.repository) {
+          await repositoryManager?.deleteRepository(item.repository.path);
+          TelemetryManager.sendEvent(TelemetryEventType.CommandExecuted, {
+            command: 'deleteRepositoryIndex',
+          });
+        }
+      } catch (error) {
+        await ErrorHandler.handleError(error, 'Failed to remove repository from index');
+      }
+    }
+  );
+
+  const indexAllRepositoriesCommand = vscode.commands.registerCommand(
+    'advanced-coding-assistant.indexAllRepositories',
+    ErrorHandler.wrapAsync(async () => {
+      await repositoryManager?.indexAllRepositories();
+      TelemetryManager.sendEvent(TelemetryEventType.CommandExecuted, {
+        command: 'indexAllRepositories',
+      });
+    }, 'Failed to index all repositories')
+  );
+
+  context.subscriptions.push(
+    refreshRepositoriesCommand,
+    indexRepositoryCommand,
+    reindexRepositoryCommand,
+    deleteRepositoryIndexCommand,
+    indexAllRepositoriesCommand
+  );
+}
+
+/**
+ * Initializes repository detection and tree view
+ * @param context - The extension context
+ */
+async function initializeRepositoryDetection(context: vscode.ExtensionContext): Promise<void> {
+  Logger.info('Initializing repository detection...');
+
+  // Create repository detector
+  repositoryDetector = new RepositoryDetector();
+  
+  // Create repository manager with API client getter
+  repositoryManager = new RepositoryManager(repositoryDetector, () => apiClient);
+  
+  // Create tree view provider
+  repositoryTreeProvider = new RepositoryTreeProvider(repositoryDetector);
+  
+  // Register tree view
+  const treeView = vscode.window.createTreeView('advancedCodingAssistant.repositories', {
+    treeDataProvider: repositoryTreeProvider,
+    showCollapseAll: false,
+  });
+
+  // Add to subscriptions for cleanup
+  context.subscriptions.push(
+    treeView,
+    { dispose: () => repositoryDetector?.dispose() },
+    { dispose: () => repositoryTreeProvider?.dispose() }
+  );
+
+  // Watch for workspace folder changes
+  const workspaceFolderWatcher = vscode.workspace.onDidChangeWorkspaceFolders(async () => {
+    Logger.info('Workspace folders changed, re-detecting repositories...');
+    await repositoryDetector?.detectRepositories();
+  });
+  context.subscriptions.push(workspaceFolderWatcher);
+
+  // Initial repository detection
+  await repositoryDetector.detectRepositories();
+  
+  const repos = repositoryDetector.getRepositories();
+  Logger.info(`Detected ${repos.length} repository(ies) in workspace`);
 }
 
 /**
@@ -153,6 +285,8 @@ async function attemptConnection(): Promise<void> {
 // This method is called when your extension is deactivated
 export function deactivate(): void {
   Logger.info('Deactivating Advanced Coding Assistant extension');
+  repositoryDetector?.dispose();
+  repositoryTreeProvider?.dispose();
   TelemetryManager.dispose();
   Logger.dispose();
 }
