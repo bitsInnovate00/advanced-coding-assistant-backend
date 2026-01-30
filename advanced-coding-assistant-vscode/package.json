@@ -152,6 +152,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically connect to the backend on extension activation"
+        },
+        "advancedCodingAssistant.chatModel": {
+          "type": "string",
+          "default": "gpt-4",
+          "description": "The model to use for chat completions (e.g., gpt-4, gpt-3.5-turbo)"
         }
       }
     }
