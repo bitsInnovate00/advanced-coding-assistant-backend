@@ -185,10 +185,11 @@ public class ACAEmbeddingStore {
     public List<TextNodeWithFilePath> searchTextNodesWithFilePath(EmbeddingSearchRequest embeddingSearchRequest) {
         float[] queryEmbedding = embeddingSearchRequest.queryEmbedding().vector();
         double minScore = embeddingSearchRequest.minScore();
+        String minScoreString = DoubleFormatter.format(minScore);
         int maxResults = embeddingSearchRequest.maxResults();
         
         String query = QUERY_TEXT_WITH_FILE_STRING.formatted(
-            textNodeIndexName, maxResults, Arrays.toString(queryEmbedding), minScore);
+            textNodeIndexName, maxResults, Arrays.toString(queryEmbedding), minScoreString);
 
         List<Record> records = neo4jGraph.executeRead(query);
         
