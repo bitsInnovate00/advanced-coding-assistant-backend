@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,14 +39,26 @@ public class ConversationService {
 
         return conversationNodes
                 .stream()
-                .sorted(Comparator.comparing(ConversationNode::getUpdatedAt))
+                .sorted(Comparator.comparing(ConversationNode::getUpdatedAt, 
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
                 .map(this::createConversationDto)
                 .toList().reversed();
     }
 
     private Map<String, String> createConversationDto(ConversationNode conversationNode) {
-        return Map.of("id", conversationNode.getId(),
-                "title", conversationNode.getTitle());
+        Map<String, String> dto = new HashMap<>();
+        dto.put("id", conversationNode.getId());
+        dto.put("title", conversationNode.getTitle());
+        dto.put("createdAt", conversationNode.getCreatedAt() != null 
+                ? conversationNode.getCreatedAt().toString() : null);
+        dto.put("updatedAt", conversationNode.getUpdatedAt() != null 
+                ? conversationNode.getUpdatedAt().toString() : null);
+        
+        List<MessageNode> messages = conversationNode.getChildMessageNodes();
+        int messageCount = messages != null ? messages.size() : 0;
+        dto.put("messageCount", String.valueOf(messageCount));
+        
+        return dto;
     }
 
     public List<Map<String, String>> getConversationMessages(String conversationId) {

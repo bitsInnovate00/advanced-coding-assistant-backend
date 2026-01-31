@@ -10,7 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -29,20 +30,33 @@ public class ConversationControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         // Setup mock responses for the service methods used in the tests
+        Map<String, String> conversation123 = new HashMap<>();
+        conversation123.put("id", "123");
+        conversation123.put("title", "Test Conversation");
+        conversation123.put("createdAt", "2024-01-15T10:30:00");
+        conversation123.put("updatedAt", "2024-01-15T12:00:00");
+        conversation123.put("messageCount", "5");
+
+        Map<String, String> conversation456 = new HashMap<>();
+        conversation456.put("id", "456");
+        conversation456.put("title", "Another Conversation");
+        conversation456.put("createdAt", "2024-01-14T09:00:00");
+        conversation456.put("updatedAt", "2024-01-14T11:00:00");
+        conversation456.put("messageCount", "3");
+
         when(conversationService.getConversation(anyString()))
-                .thenReturn(Collections.singletonMap("conversationId", "123"));
+                .thenReturn(conversation123);
 
         when(conversationService.getAllConversations())
-                .thenReturn(Arrays.asList(
-                        Collections.singletonMap("conversationId", "123"),
-                        Collections.singletonMap("conversationId", "456")
-                ));
+                .thenReturn(Arrays.asList(conversation123, conversation456));
+
+        Map<String, String> message1 = new HashMap<>();
+        message1.put("messageId", "1");
+        Map<String, String> message2 = new HashMap<>();
+        message2.put("messageId", "2");
 
         when(conversationService.getConversationMessages(anyString()))
-                .thenReturn(Arrays.asList(
-                        Collections.singletonMap("messageId", "1"),
-                        Collections.singletonMap("messageId", "2")
-                ));
+                .thenReturn(Arrays.asList(message1, message2));
         when(conversationService.renameConversation(anyString(), anyString())).thenReturn("New Conversation Title");
     }
 
@@ -54,9 +68,13 @@ public class ConversationControllerIntegrationTest {
         // WHEN: Sending a GET request to "/v1/conversations/{conversationId}"
         mockMvc.perform(get("/v1/conversations/{conversationId}", conversationId)
                         .accept(MediaType.APPLICATION_JSON))
-                // THEN: The status is OK and the response contains the expected conversation
+                // THEN: The status is OK and the response contains the expected conversation with metadata
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.conversationId").value("123"));
+                .andExpect(jsonPath("$.id").value("123"))
+                .andExpect(jsonPath("$.title").value("Test Conversation"))
+                .andExpect(jsonPath("$.createdAt").value("2024-01-15T10:30:00"))
+                .andExpect(jsonPath("$.updatedAt").value("2024-01-15T12:00:00"))
+                .andExpect(jsonPath("$.messageCount").value("5"));
     }
 
     @Test
@@ -64,10 +82,16 @@ public class ConversationControllerIntegrationTest {
         // WHEN: Sending a GET request to "/v1/conversations"
         mockMvc.perform(get("/v1/conversations")
                         .accept(MediaType.APPLICATION_JSON))
-                // THEN: The status is OK and the response contains the expected list of conversations
+                // THEN: The status is OK and the response contains the expected list of conversations with metadata
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].conversationId").value("123"))
-                .andExpect(jsonPath("$[1].conversationId").value("456"));
+                .andExpect(jsonPath("$[0].id").value("123"))
+                .andExpect(jsonPath("$[0].title").value("Test Conversation"))
+                .andExpect(jsonPath("$[0].createdAt").value("2024-01-15T10:30:00"))
+                .andExpect(jsonPath("$[0].updatedAt").value("2024-01-15T12:00:00"))
+                .andExpect(jsonPath("$[0].messageCount").value("5"))
+                .andExpect(jsonPath("$[1].id").value("456"))
+                .andExpect(jsonPath("$[1].title").value("Another Conversation"))
+                .andExpect(jsonPath("$[1].messageCount").value("3"));
     }
 
     @Test
