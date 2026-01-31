@@ -80,9 +80,11 @@ public class VSCodeRepositoryService {
             knowledgeGraphBatchInsertService.batchInsertFileStructure(knowledgeGraph, embeddingModel.dimension());
 
             // Update metadata
+            int totalFiles = countFiles(directoryPath.toFile());
             metadata.setStatus(RepositoryStatus.INDEXED);
             metadata.setLastIndexedAt(Instant.now());
-            metadata.setTotalFiles(countFiles(directoryPath.toFile()));
+            metadata.setTotalFiles(totalFiles);
+            metadata.setIndexedFiles(totalFiles); // All files are indexed
             repositoryStore.put(repoId, metadata);
 
             log.info("Successfully indexed repository: {}", repositoryName);
@@ -190,9 +192,11 @@ public class VSCodeRepositoryService {
             knowledgeGraphBatchInsertService.batchInsertFileStructure(knowledgeGraph, embeddingModel.dimension());
 
             // Update metadata
+            int totalFiles = countFiles(directoryPath.toFile());
             metadata.setStatus(RepositoryStatus.INDEXED);
             metadata.setLastIndexedAt(Instant.now());
-            metadata.setTotalFiles(countFiles(directoryPath.toFile()));
+            metadata.setTotalFiles(totalFiles);
+            metadata.setIndexedFiles(totalFiles); // All files are indexed
             repositoryStore.put(repoId, metadata);
 
             log.info("Successfully reindexed repository: {}", metadata.getRepositoryName());
