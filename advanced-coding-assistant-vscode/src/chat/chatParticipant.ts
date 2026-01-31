@@ -5,12 +5,36 @@ import { TelemetryManager, TelemetryEventType } from '../telemetry';
 import { ConfigurationManager } from '../config';
 import { ApiClient } from '../api';
 import { ChatMessage } from '../api/types';
-import { CodeBlock, SourceReference } from './types';
+import { CodeBlock, SourceReference, FileContext } from './types';
 
 /**
  * Chat participant ID
  */
 export const CHAT_PARTICIPANT_ID = 'advanced-coding-assistant.aca';
+
+/**
+ * Welcome message with example queries
+ */
+const WELCOME_MESSAGE = `👋 **Welcome to the Advanced Coding Assistant!**
+
+I can help you understand and work with code in your repository. Here are some example queries you can try:
+
+**Code Understanding:**
+- "What does the main function in this file do?"
+- "Explain how the authentication flow works in this codebase"
+- "Find all API endpoints in the repository"
+
+**Code Analysis:**
+- "What are the dependencies of this class?"
+- "Show me how this function is being used"
+- "Find similar code patterns to this snippet"
+
+**Documentation & Help:**
+- "What does this error message mean?"
+- "How do I use this API?"
+- "Summarize the README for this project"
+
+💡 **Tip:** Open a file and ask questions about it - I'll include its context automatically!`;
 
 /**
  * Chat participant for the Advanced Coding Assistant
@@ -58,6 +82,13 @@ export class ChatParticipant {
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken
   ): Promise<vscode.ChatResult> {
+    // Handle welcome/help command
+    const promptLower = request.prompt.toLowerCase().trim();
+    if (promptLower === 'help' || promptLower === 'welcome' || promptLower === '?') {
+      stream.markdown(WELCOME_MESSAGE);
+      return { metadata: { welcomeShown: true } };
+    }
+
     const apiClient = this.apiClientGetter();
 
     if (!apiClient) {
@@ -75,8 +106,8 @@ export class ChatParticipant {
       const sessionId = this.getSessionId(context);
       const conversationId = this.conversationIds.get(sessionId);
 
-      // Build messages array with history from VS Code context
-      const messages = this.buildMessages(request.prompt, context);
+      // Build messages array with history from VS Code context and current file context
+      const messages = await this.buildMessages(request.prompt, context);
 
       // Track telemetry
       TelemetryManager.sendEvent(TelemetryEventType.CommandExecuted, {
@@ -148,10 +179,21 @@ export class ChatParticipant {
         }
       }
 
-      // Add source references
+      // Add source references with line numbers
       for (const ref of sourceReferences) {
         if (ref.filePath) {
-          stream.reference(vscode.Uri.file(ref.filePath));
+          const uri = vscode.Uri.file(ref.filePath);
+          if (ref.startLine !== undefined) {
+            // Create a location with specific line range
+            const startLine = Math.max(0, ref.startLine - 1); // Convert to 0-indexed
+            const endLine = ref.endLine !== undefined ? Math.max(0, ref.endLine - 1) : startLine;
+            const range = new vscode.Range(startLine, 0, endLine, 0);
+            const location = new vscode.Location(uri, range);
+            stream.reference(location);
+          } else {
+            // Reference without line numbers
+            stream.reference(uri);
+          }
         }
       }
 
@@ -259,21 +301,40 @@ export class ChatParticipant {
 
   /**
    * Builds the messages array for the API request
+   * Includes context from the currently open file if available
    * @param prompt - The user's prompt
    * @param vscodeContext - The VS Code chat context
    */
-  private buildMessages(prompt: string, vscodeContext: vscode.ChatContext): ChatMessage[] {
+  private async buildMessages(
+    prompt: string,
+    vscodeContext: vscode.ChatContext
+  ): Promise<ChatMessage[]> {
     const messages: ChatMessage[] = [];
+
+    // Get current file context
+    const fileContext = await this.getCurrentFileContext();
+
+    // Build system message with file context info
+    let systemContent =
+      'You are an advanced coding assistant integrated into VS Code. ' +
+      'You help developers with code-related questions, provide explanations, suggest improvements, and write code. ' +
+      'When providing code, use proper markdown code blocks with language identifiers. ' +
+      'Be concise but thorough in your explanations. ' +
+      'When referencing code locations, always include the file path and line numbers in the format: `filepath:startLine-endLine` or `filepath:line` for single lines. ' +
+      'This allows users to navigate directly to the referenced code.';
+
+    if (fileContext) {
+      systemContent +=
+        `\n\nThe user currently has the file "${fileContext.fileName}" open in their editor.`;
+      if (fileContext.workspaceFolder) {
+        systemContent += ` The workspace folder is "${fileContext.workspaceFolder}".`;
+      }
+    }
 
     // Add system message
     messages.push({
       role: 'system',
-      content:
-        'You are an advanced coding assistant integrated into VS Code. ' +
-        'You help developers with code-related questions, provide explanations, suggest improvements, and write code. ' +
-        'When providing code, use proper markdown code blocks with language identifiers. ' +
-        'Be concise but thorough in your explanations. ' +
-        'If you reference files or code locations, mention the file path clearly.',
+      content: systemContent,
     });
 
     // Add history from VS Code context
@@ -300,13 +361,64 @@ export class ChatParticipant {
       }
     }
 
+    // Build user message with optional file context
+    let userContent = prompt;
+    if (fileContext && fileContext.selectedText) {
+      userContent = `${prompt}\n\nSelected code from "${fileContext.fileName}" (lines ${fileContext.selectionStartLine}-${fileContext.selectionEndLine}):\n\`\`\`${fileContext.languageId}\n${fileContext.selectedText}\n\`\`\``;
+    } else if (fileContext && fileContext.visibleContent) {
+      userContent = `${prompt}\n\nCurrently viewing "${fileContext.fileName}" (lines ${fileContext.visibleStartLine}-${fileContext.visibleEndLine}):\n\`\`\`${fileContext.languageId}\n${fileContext.visibleContent}\n\`\`\``;
+    }
+
     // Add current prompt
     messages.push({
       role: 'user',
-      content: prompt,
+      content: userContent,
     });
 
     return messages;
+  }
+
+  /**
+   * Gets context from the currently active file in the editor
+   * @returns File context information or undefined if no file is open
+   */
+  private async getCurrentFileContext(): Promise<FileContext | undefined> {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return undefined;
+    }
+
+    const document = editor.document;
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+
+    // Get file info
+    const context: FileContext = {
+      fileName: vscode.workspace.asRelativePath(document.uri),
+      languageId: document.languageId,
+      workspaceFolder: workspaceFolder?.name,
+    };
+
+    // Get selected text if any
+    const selection = editor.selection;
+    if (!selection.isEmpty) {
+      context.selectedText = document.getText(selection);
+      context.selectionStartLine = selection.start.line + 1; // 1-indexed
+      context.selectionEndLine = selection.end.line + 1;
+    }
+
+    // Get visible range content (limited to reasonable size)
+    const visibleRanges = editor.visibleRanges;
+    if (visibleRanges.length > 0) {
+      const visibleRange = visibleRanges[0];
+      const maxLines = 50; // Limit visible content
+      const endLine = Math.min(visibleRange.end.line, visibleRange.start.line + maxLines);
+      const limitedRange = new vscode.Range(visibleRange.start.line, 0, endLine, 0);
+      context.visibleContent = document.getText(limitedRange);
+      context.visibleStartLine = visibleRange.start.line + 1;
+      context.visibleEndLine = endLine + 1;
+    }
+
+    return context;
   }
 
   /**
@@ -331,6 +443,10 @@ export class ChatParticipant {
 
   /**
    * Extracts source references from the response, validating against workspace files
+   * Supports formats like:
+   * - filepath.ext
+   * - filepath.ext:line
+   * - filepath.ext:startLine-endLine
    * @param content - The response content
    * @param sourceReferences - Array to populate with extracted references
    */
@@ -338,18 +454,28 @@ export class ChatParticipant {
     content: string,
     sourceReferences: SourceReference[]
   ): Promise<void> {
-    // Look for file paths in the format: file.ext, ./path/file.ext, /path/file.ext
-    const filePathRegex = /(?:^|[\s`'"(])([./]?[\w/-]+\.[a-zA-Z]{2,10})(?:[\s`'")\]:,]|$)/gm;
+    // Look for file paths with optional line numbers in formats:
+    // - file.ext
+    // - file.ext:line
+    // - file.ext:startLine-endLine
+    // - `file.ext:line`
+    const filePathWithLineRegex =
+      /(?:^|[\s`'"(])([./]?[\w/-]+\.[a-zA-Z]{2,10})(?::(\d+)(?:-(\d+))?)?(?=[\s`'")\]:,]|$)/gm;
     const seenPaths = new Set<string>();
     const workspaceFolders = vscode.workspace.workspaceFolders;
     let match;
 
-    while ((match = filePathRegex.exec(content)) !== null) {
+    while ((match = filePathWithLineRegex.exec(content)) !== null) {
       const filePath = match[1];
+      const startLine = match[2] ? parseInt(match[2], 10) : undefined;
+      const endLine = match[3] ? parseInt(match[3], 10) : startLine;
+
+      // Create a unique key including line numbers
+      const uniqueKey = `${filePath}:${startLine || ''}:${endLine || ''}`;
 
       // Filter out common false positives
       if (
-        seenPaths.has(filePath) ||
+        seenPaths.has(uniqueKey) ||
         filePath.startsWith('http') ||
         filePath.includes('...') ||
         filePath.length < 5 ||
@@ -367,9 +493,13 @@ export class ChatParticipant {
           const fullPath = vscode.Uri.joinPath(folder.uri, filePath);
           try {
             await vscode.workspace.fs.stat(fullPath);
-            // File exists, add as reference
-            seenPaths.add(filePath);
-            sourceReferences.push({ filePath: fullPath.fsPath });
+            // File exists, add as reference with line numbers
+            seenPaths.add(uniqueKey);
+            sourceReferences.push({
+              filePath: fullPath.fsPath,
+              startLine,
+              endLine,
+            });
             break;
           } catch {
             // File doesn't exist in this folder, continue searching
