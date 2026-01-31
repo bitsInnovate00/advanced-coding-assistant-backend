@@ -47,3 +47,27 @@ export interface ChatResponseMetadata {
   sourceReferences: SourceReference[];
   conversationId?: string;
 }
+
+/**
+ * Context information from the currently active file in the editor
+ */
+export interface FileContext {
+  /** Relative path to the file from the workspace root */
+  fileName: string;
+  /** VS Code language identifier (e.g., 'javascript', 'python') */
+  languageId: string;
+  /** Name of the workspace folder containing this file */
+  workspaceFolder?: string;
+  /** Selected text content if any */
+  selectedText?: string;
+  /** Start line of selection (1-indexed) */
+  selectionStartLine?: number;
+  /** End line of selection (1-indexed) */
+  selectionEndLine?: number;
+  /** Content currently visible in the editor viewport */
+  visibleContent?: string;
+  /** Start line of visible range (1-indexed) */
+  visibleStartLine?: number;
+  /** End line of visible range (1-indexed) */
+  visibleEndLine?: number;
+}

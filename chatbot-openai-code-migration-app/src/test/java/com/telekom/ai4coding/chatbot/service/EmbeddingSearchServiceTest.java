@@ -88,6 +88,8 @@ public class EmbeddingSearchServiceTest extends BaseIntegrationTest {
         verify(hypotheticalDocumentGenerator, times(1)).getFakeCodeDocumentation(query);
         assertTrue(context.length() != 0);
         assertTrue(context.contains("Related ASTNode"));
+        // Verify file path is included in context for source references
+        assertTrue("Context should contain filePath for source references", context.contains("filePath:"));
     }
 
     @Test
@@ -104,6 +106,23 @@ public class EmbeddingSearchServiceTest extends BaseIntegrationTest {
         verify(hypotheticalDocumentGenerator, times(1)).getFakeCodeDocumentation(query);
         assertTrue(context.length() != 0);
         assertFalse(context.contains("Related ASTNode"));
+    }
+
+    @Test
+    void getContextUsingEmbedding_IncludesLineNumbers() {
+        String query = "function definition";
+
+        when(hypotheticalDocumentGenerator.getFakeCodeSnippet(query)).thenReturn("def test()");
+        when(hypotheticalDocumentGenerator.getFakeCodeDocumentation(query)).thenReturn("Test function");
+        when(codeContextVerifyAgent.isRelevant(eq(query), any())).thenReturn(true);
+
+        String context = embeddingSearchService.getContextUsingEmbedding(query);
+
+        verify(hypotheticalDocumentGenerator, times(1)).getFakeCodeSnippet(query);
+        assertTrue(context.length() != 0);
+        // Verify line numbers are included in context for source references
+        assertTrue("Context should contain startLine for source references", context.contains("startLine:"));
+        assertTrue("Context should contain endLine for source references", context.contains("endLine:"));
     }
   
 }

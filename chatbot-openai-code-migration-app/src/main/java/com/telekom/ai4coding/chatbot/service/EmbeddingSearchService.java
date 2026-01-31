@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 
 import com.telekom.ai4coding.chatbot.configuration.agent.CodeContextVerifyAgent;
 import com.telekom.ai4coding.chatbot.configuration.agent.HypotheticalDocumentGenerator;
-import com.telekom.ai4coding.chatbot.graph.ASTNode;
-import com.telekom.ai4coding.chatbot.graph.TextNode;
 import com.telekom.ai4coding.chatbot.tools.embedding.ACAEmbeddingStore;
+import com.telekom.ai4coding.chatbot.tools.embedding.ACAEmbeddingStore.ASTNodeWithFilePath;
+import com.telekom.ai4coding.chatbot.tools.embedding.ACAEmbeddingStore.TextNodeWithFilePath;
 
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -80,12 +80,12 @@ public class EmbeddingSearchService {
                 .minScore(MIN_SCORE)
                 .build();
 
-        List<ASTNode> searchResult = embeddingStore.searchASTNodes(embeddingSearchRequest);
+        List<ASTNodeWithFilePath> searchResult = embeddingStore.searchASTNodesWithFilePath(embeddingSearchRequest);
 
-        List<ASTNode> filteredSearchResult = searchResult.stream()
-                .filter(node -> {
-                    boolean isRelevant = codeContextVerifyAgent.isRelevant(query, node.getText());
-                    log.debug("\"{}\" is deemed irrelevant by codeContextVerifyAgent", node.getText());
+        List<ASTNodeWithFilePath> filteredSearchResult = searchResult.stream()
+                .filter(nodeWithPath -> {
+                    boolean isRelevant = codeContextVerifyAgent.isRelevant(query, nodeWithPath.astNode().getText());
+                    log.debug("\"{}\" is deemed irrelevant by codeContextVerifyAgent", nodeWithPath.astNode().getText());
                     return isRelevant;
                 })
                 .collect(Collectors.toList());
@@ -96,14 +96,16 @@ public class EmbeddingSearchService {
 
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < filteredSearchResult.size(); i++) {
+            ASTNodeWithFilePath nodeWithPath = filteredSearchResult.get(i);
             sb.append("Related ASTNode " + Integer.toString(i+1) + ": ");
             sb.append(System.getProperty("line.separator"));
             sb.append("{");
-            sb.append("id: " + Long.toString(filteredSearchResult.get(i).getId()) + ", ");
-            sb.append("type: " + "\"" + filteredSearchResult.get(i).getType() + "\"" + ", ");
-            sb.append("text: " + "\"" + filteredSearchResult.get(i).getText() + "\"" + ", ");
-            sb.append("startLine: " + Integer.toString(filteredSearchResult.get(i).getStartLine()) + "\"" + ", ");
-            sb.append("endLine: " + Integer.toString(filteredSearchResult.get(i).getStartLine()));
+            sb.append("id: " + Long.toString(nodeWithPath.astNode().getId()) + ", ");
+            sb.append("type: " + "\"" + nodeWithPath.astNode().getType() + "\"" + ", ");
+            sb.append("text: " + "\"" + nodeWithPath.astNode().getText() + "\"" + ", ");
+            sb.append("filePath: " + "\"" + (nodeWithPath.filePath() != null ? nodeWithPath.filePath() : "unknown") + "\"" + ", ");
+            sb.append("startLine: " + Integer.toString(nodeWithPath.astNode().getStartLine()) + ", ");
+            sb.append("endLine: " + Integer.toString(nodeWithPath.astNode().getEndLine()));
             sb.append("}");
             sb.append(System.getProperty("line.separator"));
         }
@@ -121,7 +123,7 @@ public class EmbeddingSearchService {
               .minScore(MIN_SCORE)
               .build();
 
-      List<TextNode> searchResult = embeddingStore.searchTextNodes(embeddingSearchRequest);
+      List<TextNodeWithFilePath> searchResult = embeddingStore.searchTextNodesWithFilePath(embeddingSearchRequest);
 
       if(searchResult.isEmpty()) {
           return "";
@@ -129,12 +131,14 @@ public class EmbeddingSearchService {
 
       StringBuilder sb = new StringBuilder();
       for(int i = 0; i < searchResult.size(); i++) {
+          TextNodeWithFilePath nodeWithPath = searchResult.get(i);
           sb.append("Related TextNode " + Integer.toString(i+1) + ": ");
           sb.append(System.getProperty("line.separator"));
           sb.append("{");
-          sb.append("id: " + Long.toString(searchResult.get(i).getId()) + ", ");
-          sb.append("text: " + "\"" + searchResult.get(i).getText() + "\"" + ", ");
-          sb.append("metadata: " + searchResult.get(i).getMetadata() + "\"" + ", ");
+          sb.append("id: " + Long.toString(nodeWithPath.textNode().getId()) + ", ");
+          sb.append("text: " + "\"" + nodeWithPath.textNode().getText() + "\"" + ", ");
+          sb.append("filePath: " + "\"" + (nodeWithPath.filePath() != null ? nodeWithPath.filePath() : "unknown") + "\"" + ", ");
+          sb.append("metadata: " + nodeWithPath.textNode().getMetadata());
           sb.append("}");
           sb.append(System.getProperty("line.separator"));
       }

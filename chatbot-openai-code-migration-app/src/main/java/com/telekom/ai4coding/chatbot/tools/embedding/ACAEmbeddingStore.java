@@ -38,6 +38,34 @@ public class ACAEmbeddingStore {
         ORDER BY score DESC
         """;
 
+    private final String QUERY_AST_WITH_FILE_STRING = """
+        CALL db.index.vector.queryNodes("%s", %d, %s)
+        YIELD node, score
+        WHERE score >= %s
+        OPTIONAL MATCH (f:FileNode)-[:HAS_AST]->(:ASTNode)-[:PARENT_OF*0..]->(node)
+        RETURN apoc.map.merge({id: id(node)}, node) as ASTNode, f.relativePath as filePath
+        ORDER BY score DESC
+        """;
+
+    private final String QUERY_TEXT_WITH_FILE_STRING = """
+        CALL db.index.vector.queryNodes("%s", %d, %s)
+        YIELD node, score
+        WHERE score >= %s
+        OPTIONAL MATCH (f:FileNode)-[:HAS_TEXT]->(node)
+        RETURN apoc.map.merge({id: id(node)}, node) as TextNode, f.relativePath as filePath
+        ORDER BY score DESC
+        """;
+
+    /**
+     * Result record that pairs an ASTNode with its file path.
+     */
+    public record ASTNodeWithFilePath(ASTNode astNode, String filePath) {}
+
+    /**
+     * Result record that pairs a TextNode with its file path.
+     */
+    public record TextNodeWithFilePath(TextNode textNode, String filePath) {}
+
     private ACAEmbeddingStore(Driver driver,  String astNodeIndexName, String textNodeIndexName) {
         this.neo4jGraph = new Neo4jGraph(driver);
         this.astNodeIndexName = astNodeIndexName;
@@ -109,6 +137,82 @@ public class ACAEmbeddingStore {
           result.add(textNode);
       }
       return result;
+    }
+
+    /**
+     * Searches for AST nodes with their associated file paths.
+     * This is useful for providing source references with file:line information.
+     */
+    public List<ASTNodeWithFilePath> searchASTNodesWithFilePath(EmbeddingSearchRequest embeddingSearchRequest) {
+        float[] queryEmbedding = embeddingSearchRequest.queryEmbedding().vector();
+        double minScore = embeddingSearchRequest.minScore();
+        String minScoreString = DoubleFormatter.format(minScore);
+        int maxResults = embeddingSearchRequest.maxResults();
+        
+        String query = QUERY_AST_WITH_FILE_STRING.formatted(
+            astNodeIndexName, maxResults, Arrays.toString(queryEmbedding), minScoreString);
+
+        List<Record> records = neo4jGraph.executeRead(query);
+        
+        List<ASTNodeWithFilePath> result = new LinkedList<>();
+        for(Record record : records) {
+            if(!verifyASTNodeRecord(record)) {
+                continue;
+            }
+
+            // Mapping Object to ASTNode.
+            Map<String, Object> astNodeMap = record.get("ASTNode").asMap();
+            Collection<Double> embeddingCollection = (Collection<Double>) astNodeMap.get("embedding");
+            ASTNode astNode = new ASTNode(
+                (long) astNodeMap.get("id"),
+                (String) astNodeMap.get("type"),
+                (String) astNodeMap.get("text"),
+                (int) ((long) astNodeMap.get("startLine")),
+                (int) ((long) astNodeMap.get("endLine")),
+                embeddingCollection.stream().mapToDouble(Double::doubleValue).toArray(),
+                null);
+            
+            String filePath = record.get("filePath").isNull() ? null : record.get("filePath").asString();
+            result.add(new ASTNodeWithFilePath(astNode, filePath));
+        }
+        return result;
+    }
+
+    /**
+     * Searches for Text nodes with their associated file paths.
+     * This is useful for providing source references with file information.
+     */
+    public List<TextNodeWithFilePath> searchTextNodesWithFilePath(EmbeddingSearchRequest embeddingSearchRequest) {
+        float[] queryEmbedding = embeddingSearchRequest.queryEmbedding().vector();
+        double minScore = embeddingSearchRequest.minScore();
+        String minScoreString = DoubleFormatter.format(minScore);
+        int maxResults = embeddingSearchRequest.maxResults();
+        
+        String query = QUERY_TEXT_WITH_FILE_STRING.formatted(
+            textNodeIndexName, maxResults, Arrays.toString(queryEmbedding), minScoreString);
+
+        List<Record> records = neo4jGraph.executeRead(query);
+        
+        List<TextNodeWithFilePath> result = new LinkedList<>();
+        for(Record record : records) {
+            if(!verifyTextNodeRecord(record)) {
+                continue;
+            }
+
+            // Mapping Object to TextNode.
+            Map<String, Object> textNodeMap = record.get("TextNode").asMap();
+            Collection<Double> embeddingCollection = (Collection<Double>) textNodeMap.get("embedding");
+            TextNode textNode = new TextNode(
+                (long) textNodeMap.get("id"),
+                (String) textNodeMap.get("text"),
+                (String) textNodeMap.get("metadata"),
+                embeddingCollection.stream().mapToDouble(Double::doubleValue).toArray(),
+                null);
+            
+            String filePath = record.get("filePath").isNull() ? null : record.get("filePath").asString();
+            result.add(new TextNodeWithFilePath(textNode, filePath));
+        }
+        return result;
     }
 
     private boolean verifyASTNodeRecord(Record record) {
